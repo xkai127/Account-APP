@@ -1,0 +1,678 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>我的空间</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+        html,
+        body {
+            width: 100%;
+            height: 100vh;
+            height: 100dvh;
+            background: #f5f9fc;
+            overflow: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* ===== 装饰气泡 ===== */
+        .bubble {
+            position: fixed;
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            box-shadow: inset 0 -8px 30px rgba(255, 255, 255, 0.2), 0 8px 40px rgba(52, 211, 153, 0.03);
+            animation: bubbleFloat 22s ease-in-out infinite alternate;
+        }
+        .bubble::after {
+            content: '';
+            position: absolute;
+            top: 12%;
+            left: 22%;
+            width: 35%;
+            height: 22%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.6) 0%, transparent 70%);
+            border-radius: 50%;
+            transform: rotate(-25deg);
+        }
+        .bubble:nth-child(1) {
+            width: 30vmin;
+            height: 30vmin;
+            top: 2%;
+            left: -2%;
+            background: radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.3), rgba(52, 211, 153, 0.03) 60%);
+            animation-duration: 24s;
+        }
+        .bubble:nth-child(2) {
+            width: 22vmin;
+            height: 22vmin;
+            bottom: 20%;
+            right: 2%;
+            background: radial-gradient(circle at 40% 25%, rgba(255, 255, 255, 0.35), rgba(56, 189, 248, 0.04) 60%);
+            animation-duration: 28s;
+            animation-delay: -5s;
+        }
+        .bubble:nth-child(3) {
+            width: 14vmin;
+            height: 14vmin;
+            top: 40%;
+            left: 80%;
+            background: radial-gradient(circle at 35% 20%, rgba(255, 255, 255, 0.4), rgba(52, 211, 153, 0.04) 60%);
+            animation-duration: 20s;
+            animation-delay: -9s;
+        }
+        .bubble:nth-child(4) {
+            width: 18vmin;
+            height: 18vmin;
+            top: 18%;
+            right: 18%;
+            background: radial-gradient(circle at 25% 20%, rgba(255, 255, 255, 0.25), rgba(56, 189, 248, 0.03) 60%);
+            animation-duration: 26s;
+            animation-delay: -3s;
+        }
+        @keyframes bubbleFloat {
+            0% {
+                transform: translate(0, 0) scale(1) rotate(0deg);
+                opacity: 0.4;
+            }
+            100% {
+                transform: translate(-20px, -25px) scale(1.06) rotate(6deg);
+                opacity: 0.8;
+            }
+        }
+
+        /* ===== 应用容器 ===== */
+        .app-shell {
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.50);
+            backdrop-filter: blur(32px) saturate(1.6);
+            -webkit-backdrop-filter: blur(32px) saturate(1.6);
+            display: flex;
+            flex-direction: column;
+            padding: 3.5vh 3.5vw 2.5vh;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* ===== 头部 ===== */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 3vh;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+        }
+        .header h1 {
+            font-size: clamp(22px, 6vw, 32px);
+            font-weight: 700;
+            color: #0c4a6e;
+            letter-spacing: 0.5px;
+        }
+        .header .sub {
+            font-size: clamp(12px, 3vw, 16px);
+            color: #64748b;
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            padding: 0.4vh 3vw;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            cursor: default;
+            user-select: none;
+        }
+
+        /* ===== 今日卡片 ===== */
+        .today-card {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: clamp(24px, 6vw, 40px);
+            padding: 2vh 3.5vw 2.2vh;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            margin-bottom: 3.5vh;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 6px 24px rgba(0, 0, 0, 0.02);
+        }
+        .today-card .greeting {
+            font-size: clamp(16px, 4.2vw, 24px);
+            font-weight: 600;
+            color: #0c4a6e;
+            margin-bottom: 0.8vh;
+        }
+        .today-card .greeting span {
+            background: linear-gradient(135deg, #34d399, #22d3ee);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .today-card .stats-row {
+            display: flex;
+            justify-content: space-around;
+            gap: 1vw;
+        }
+        .today-card .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+        .today-card .stat-item .num {
+            font-size: clamp(20px, 5.5vw, 34px);
+            font-weight: 700;
+            color: #0c4a6e;
+            line-height: 1.2;
+        }
+        .today-card .stat-item .num.income {
+            color: #34d399;
+        }
+        .today-card .stat-item .num.expense {
+            color: #f472b6;
+        }
+        .today-card .stat-item .label {
+            font-size: clamp(10px, 2.4vw, 14px);
+            color: #64748b;
+            margin-top: 0.2vh;
+        }
+
+        /* ===== 功能网格 ===== */
+        .grid-4 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            gap: 1.5vw;
+            margin-bottom: 2.2vh;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+        }
+        .grid-item {
+            background: rgba(255, 255, 255, 0.45);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: clamp(18px, 4.5vw, 32px);
+            padding: 1.6vh 0.2vw;
+            text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.01);
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            cursor: pointer;
+            transition: transform 0.12s ease, background 0.12s ease;
+        }
+        .grid-item:active {
+            transform: scale(0.92);
+            background: rgba(255, 255, 255, 0.7);
+        }
+        .grid-item .icon {
+            font-size: clamp(26px, 7.5vw, 44px);
+            display: block;
+            line-height: 1.1;
+            pointer-events: none;
+        }
+        .grid-item .name {
+            font-size: clamp(10px, 2.6vw, 15px);
+            font-weight: 500;
+            color: #0c4a6e;
+            margin-top: 0.2vh;
+            pointer-events: none;
+        }
+
+        /* ===== 今日待办 ===== */
+        .todo-card {
+            background: rgba(255, 255, 255, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.75);
+            border-radius: clamp(20px, 5vw, 30px);
+            padding: 1.8vh 4vw;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+        }
+        .todo-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1vh; }
+        .todo-title { font-size: clamp(15px, 3.8vw, 21px); font-weight: 700; color: #173b4f; }
+        .todo-count { border: 0; background: transparent; font-size: clamp(10px, 2.5vw, 13px); color: #288a7e; cursor: pointer; padding: 4px 0; }
+        .todo-list { display: grid; gap: .65vh; max-height: 128px; overflow-y: auto; padding-right: 3px; }
+        .todo-list::-webkit-scrollbar { width: 3px; }
+        .todo-list::-webkit-scrollbar-thumb { background: rgba(40, 199, 166, .35); border-radius: 99px; }
+        .todo-item { display: flex; align-items: center; gap: 10px; color: #294d61; font-size: clamp(12px, 3vw, 16px); }
+        .todo-item-text { min-width: 0; overflow-wrap: anywhere; }
+        .rolled-badge { flex: 0 0 auto; display: inline-grid; place-items: center; margin-left: auto; width: 20px; height: 20px; border-radius: 50%; color: #8b63c7; background: #f0e8ff; font-size: 11px; font-weight: 800; }
+        .todo-check { width: 20px; height: 20px; border: 2px solid #45b9aa; background: #fff; border-radius: 7px; flex: 0 0 auto; cursor: pointer; position: relative; }
+        .todo-check:active { transform: scale(.9); }
+        .todo-empty { color: #8196a1; font-size: clamp(12px, 3vw, 15px); padding: .35vh 0; }
+        .todo-more { color: #3d8f83; font-size: clamp(10px, 2.5vw, 13px); margin-left: 19px; }
+        .todo-add { display: flex; gap: 8px; margin-top: 1.1vh; }
+        .todo-add input { width: 100%; min-width: 0; height: 36px; padding: 0 12px; border-radius: 12px; font-size: 13px; }
+        .todo-add button { flex: 0 0 auto; height: 36px; border: 0; border-radius: 12px; padding: 0 14px; color: #fff; background: linear-gradient(135deg, #38bfa8, #55b9d6); font-weight: 700; cursor: pointer; }
+
+        /* ===== 底部提示 ===== */
+        .footer-tip {
+            text-align: center;
+            color: #94a3b8;
+            font-size: clamp(9px, 2.2vw, 13px);
+            margin-top: 3.5vh;
+            flex-shrink: 0;
+            position: relative;
+            z-index: 2;
+            padding-bottom: 0.6vh;
+            letter-spacing: 0.5px;
+        }
+
+        /* ===== Toast ===== */
+        .toast {
+            position: fixed;
+            top: 4vh;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            color: white;
+            padding: 1.2vh 5vw;
+            border-radius: 40px;
+            font-size: clamp(13px, 3.4vw, 18px);
+            z-index: 500;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+            pointer-events: none;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            white-space: nowrap;
+        }
+        .toast.show {
+            opacity: 1;
+        }
+</style>
+<link rel="stylesheet" href="theme.css">
+</head>
+<body class="page-home">
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+    <div class="bubble"></div>
+
+    <div class="app-shell">
+        <!-- 头部 -->
+        <div class="header">
+            <h1>✨ 我的空间</h1>
+            <div class="sub" id="todayDate">今天</div>
+        </div>
+
+        <!-- 今日概览 -->
+        <div class="today-card">
+            <div class="greeting">👋 Hi ，<span id="userGreeting">朋友</span></div>
+            <div class="stats-row">
+                <div class="stat-item">
+                    <div class="num income" id="todayIncome">¥0.00</div>
+                    <div class="label">今日收入</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num expense" id="todayExpense">¥0.00</div>
+                    <div class="label">今日支出</div>
+                </div>
+                <div class="stat-item">
+                    <div class="num" id="todayBalance" style="color:#0c4a6e;">¥0.00</div>
+                    <div class="label">结余</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 功能入口 -->
+        <div class="grid-4">
+            <div class="grid-item" data-page="bill.html">
+                <span class="icon">📒</span>
+                <span class="name">账本</span>
+            </div>
+            <div class="grid-item" data-page="add.html">
+                <span class="icon">✏️</span>
+                <span class="name">记一笔</span>
+            </div>
+            <div class="grid-item" data-page="stats.html">
+                <span class="icon">📊</span>
+                <span class="name">统计</span>
+            </div>
+            <div class="grid-item" data-page="plan.html">
+                <span class="icon">📅</span>
+                <span class="name">计划</span>
+            </div>
+        </div>
+
+        <section class="todo-card" id="todayTodo">
+            <div class="todo-head">
+                <div class="todo-title">今日待办</div>
+                <button class="todo-count" id="todoCount" type="button">0 项 · 查看全部 ›</button>
+            </div>
+            <div class="todo-list" id="todoList"></div>
+            <div class="todo-add">
+                <input id="todoInput" maxlength="60" placeholder="添加今天要做的事" aria-label="新增今日待办">
+                <button id="todoAddBtn" type="button">添加</button>
+            </div>
+        </section>
+
+        <!-- 底部提示 -->
+        <div class="footer-tip">← 左滑进入计划 ｜ 右滑进入账本 →</div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="summary.js"></script>
+    <script>
+        (function() {
+            'use strict';
+
+            const BOOKS_KEY = 'my_books_data';
+            const CURRENT_KEY = 'my_current_book';
+            const PLANS_KEY = 'my_calendar_plan';
+            const ROLLED_KEY = 'my_calendar_plan_rolled';
+
+            // ===== 数据层 =====
+            function getBooks() {
+                try {
+                    const raw = localStorage.getItem(BOOKS_KEY);
+                    if (!raw) {
+                        const defaultData = { '账本': { records: [] } };
+                        localStorage.setItem(BOOKS_KEY, JSON.stringify(defaultData));
+                        return defaultData;
+                    }
+                    return JSON.parse(raw);
+                } catch {
+                    return { '账本': { records: [] } };
+                }
+            }
+
+            function getCurrentBook() {
+                let name = localStorage.getItem(CURRENT_KEY);
+                const books = getBooks();
+                if (!name || !books[name]) {
+                    const first = Object.keys(books)[0] || '账本';
+                    localStorage.setItem(CURRENT_KEY, first);
+                    return first;
+                }
+                return name;
+            }
+
+            function getTodayStr() {
+                const d = new Date();
+                const y = d.getFullYear();
+                const m = String(d.getMonth() + 1).padStart(2, '0');
+                const day = String(d.getDate()).padStart(2, '0');
+                return y + '-' + m + '-' + day;
+            }
+
+            // ===== 工具 =====
+            function vibrate() {
+                if (navigator.vibrate) navigator.vibrate(6);
+            }
+
+            let toastTimer;
+
+            function showToast(msg) {
+                const el = document.getElementById('toast');
+                el.textContent = msg;
+                el.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(function() {
+                    el.classList.remove('show');
+                }, 2000);
+            }
+
+            // ===== 渲染 =====
+            function updateToday() {
+                const bookName = getCurrentBook();
+                const books = getBooks();
+                const data = books[bookName] || { records: [] };
+                const today = getTodayStr();
+
+                let inc = 0,
+                    exp = 0;
+                data.records.forEach(function(r) {
+                    if (r.date === today) {
+                        const amt = Number(r.amount) || 0;
+                        if (r.type === 'income') inc += amt;
+                        else exp += amt;
+                    }
+                });
+
+                document.getElementById('todayIncome').textContent = '¥' + inc.toFixed(2);
+                document.getElementById('todayExpense').textContent = '¥' + exp.toFixed(2);
+                document.getElementById('todayBalance').textContent = '¥' + (inc - exp).toFixed(2);
+            }
+
+            function escapeHtml(value) {
+                return String(value == null ? '' : value).replace(/[&<>"']/g, function(ch) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch];
+                });
+            }
+
+            function normalizeDateKey(key) {
+                const match = String(key).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+                if (!match) return key;
+                return match[1] + '-' + match[2].padStart(2, '0') + '-' + match[3].padStart(2, '0');
+            }
+
+            function getPlans() {
+                let raw = {};
+                try { raw = JSON.parse(localStorage.getItem(PLANS_KEY) || '{}'); } catch (_) {}
+                const normalized = {};
+                Object.keys(raw).forEach(function(key) {
+                    const target = normalizeDateKey(key);
+                    if (!Array.isArray(raw[key])) return;
+                    if (!normalized[target]) normalized[target] = [];
+                    normalized[target] = normalized[target].concat(raw[key]);
+                });
+                return normalized;
+            }
+
+            function getRolledMeta() {
+                let raw = {};
+                try { raw = JSON.parse(localStorage.getItem(ROLLED_KEY) || '{}'); } catch (_) {}
+                const normalized = {};
+                Object.keys(raw).forEach(function(key) {
+                    const target = normalizeDateKey(key);
+                    if (!Array.isArray(raw[key])) return;
+                    if (!normalized[target]) normalized[target] = [];
+                    normalized[target] = normalized[target].concat(raw[key].map(Boolean));
+                });
+                return normalized;
+            }
+
+            function saveRolledMeta(meta) {
+                try { localStorage.setItem(ROLLED_KEY, JSON.stringify(meta)); return true; }
+                catch (_) { return false; }
+            }
+
+            function rolloverOverduePlans() {
+                const plans = getPlans();
+                const rolledMeta = getRolledMeta();
+                const today = getTodayStr();
+                let moved = 0;
+                if (!rolledMeta[today]) rolledMeta[today] = [];
+                while (rolledMeta[today].length < (plans[today] || []).length) rolledMeta[today].push(false);
+                Object.keys(plans).sort().forEach(function(key) {
+                    if (key < today && Array.isArray(plans[key]) && plans[key].length) {
+                        if (!plans[today]) plans[today] = [];
+                        moved += plans[key].length;
+                        plans[today] = plans[today].concat(plans[key]);
+                        rolledMeta[today] = rolledMeta[today].concat(plans[key].map(function() { return true; }));
+                        delete plans[key];
+                        delete rolledMeta[key];
+                    }
+                });
+                if (moved) { savePlans(plans); saveRolledMeta(rolledMeta); }
+                return moved;
+            }
+
+            function updateTodayTodo() {
+                const plans = getPlans();
+                const list = Array.isArray(plans[getTodayStr()]) ? plans[getTodayStr()] : [];
+                const rolled = getRolledMeta()[getTodayStr()] || [];
+                const container = document.getElementById('todoList');
+                document.getElementById('todoCount').textContent = list.length + ' 项 · 查看全部 ›';
+                if (!list.length) {
+                    container.innerHTML = '<div class="todo-empty">今天还没有安排，给自己定个小目标吧</div>';
+                    return;
+                }
+                container.innerHTML = list.map(function(text, index) {
+                    const badge = rolled[index] ? '<span class="rolled-badge" title="由之前日期自动顺延" aria-label="由之前日期自动顺延">↗</span>' : '';
+                    return '<div class="todo-item"><button class="todo-check" type="button" data-index="' + index + '" aria-label="完成：' + escapeHtml(text) + '"></button><span class="todo-item-text">' + escapeHtml(text) + '</span>' + badge + '</div>';
+                }).join('');
+            }
+
+            function savePlans(plans) {
+                try { localStorage.setItem(PLANS_KEY, JSON.stringify(plans)); return true; }
+                catch (_) { showToast('❌ 保存失败，请检查存储空间'); return false; }
+            }
+
+            function addTodayTodo() {
+                const input = document.getElementById('todoInput');
+                const text = input.value.trim();
+                if (!text) { showToast('请输入待办内容'); return; }
+                const plans = getPlans();
+                const today = getTodayStr();
+                if (!Array.isArray(plans[today])) plans[today] = [];
+                plans[today].push(text);
+                if (!savePlans(plans)) return;
+                const rolledMeta = getRolledMeta();
+                if (!rolledMeta[today]) rolledMeta[today] = [];
+                while (rolledMeta[today].length < plans[today].length - 1) rolledMeta[today].push(false);
+                rolledMeta[today].push(false);
+                saveRolledMeta(rolledMeta);
+                input.value = '';
+                updateTodayTodo();
+                showToast('✅ 已加入今日待办');
+                vibrate();
+            }
+
+            function completeTodayTodo(index) {
+                const plans = getPlans();
+                const today = getTodayStr();
+                if (!Array.isArray(plans[today]) || !plans[today][index]) return;
+                plans[today].splice(index, 1);
+                if (!plans[today].length) delete plans[today];
+                if (!savePlans(plans)) return;
+                const rolledMeta = getRolledMeta();
+                if (Array.isArray(rolledMeta[today])) {
+                    rolledMeta[today].splice(index, 1);
+                    if (!rolledMeta[today].length) delete rolledMeta[today];
+                    saveRolledMeta(rolledMeta);
+                }
+                updateTodayTodo();
+                showToast('🎉 已完成');
+                vibrate();
+            }
+
+            function setGreetingAndDate() {
+                const d = new Date();
+                const h = d.getHours();
+
+                let greet = '朋友';
+                if (h < 6) greet = '夜猫子';
+                else if (h < 9) greet = '清晨好';
+                else if (h < 12) greet = '上午好';
+                else if (h < 14) greet = '中午好';
+                else if (h < 18) greet = '下午好';
+                else if (h < 21) greet = '傍晚好';
+                else greet = '晚上好';
+
+                document.getElementById('userGreeting').textContent = greet;
+
+                const y = d.getFullYear();
+                const m = d.getMonth() + 1;
+                const day = d.getDate();
+                const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+                const wd = weekdays[d.getDay()];
+
+                document.getElementById('todayDate').textContent = y + '年' + m + '月' + day + '日 周' + wd;
+            }
+
+            function goTo(page) {
+                vibrate();
+                window.location.href = page;
+            }
+
+            // ===== 滑动手势 =====
+            let startX = 0;
+            let startY = 0;
+
+            document.addEventListener('touchstart', function(e) {
+                const touch = e.touches[0];
+                startX = touch.clientX;
+                startY = touch.clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchend', function(e) {
+                const touch = e.changedTouches[0];
+                const deltaX = startX - touch.clientX;
+                const deltaY = Math.abs(startY - touch.clientY);
+
+                if (Math.abs(deltaX) > 80 && Math.abs(deltaX) > deltaY * 1.5) {
+                    vibrate();
+                    if (deltaX > 0) {
+                        // 左滑 → 计划
+                        window.location.href = 'plan.html';
+                    } else {
+                        // 右滑 → 账本
+                        window.location.href = 'bill.html';
+                    }
+                }
+            }, { passive: true });
+
+            // ===== 事件绑定 =====
+            document.addEventListener('DOMContentLoaded', function() {
+                setGreetingAndDate();
+                const movedPlans = rolloverOverduePlans();
+                updateToday();
+                updateTodayTodo();
+                if (movedPlans) showToast('📌 已顺延 ' + movedPlans + ' 项未完成计划');
+
+                // 功能卡片点击 (事件委托)
+                document.querySelector('.grid-4').addEventListener('click', function(e) {
+                    const target = e.target.closest('.grid-item');
+                    if (target) {
+                        const page = target.getAttribute('data-page');
+                        if (page) goTo(page);
+                    }
+                });
+
+                // 点击日期显示今日记录数
+                document.getElementById('todayDate').addEventListener('click', function() {
+                    const book = getCurrentBook();
+                    const books = getBooks();
+                    const data = books[book] || { records: [] };
+                    const today = getTodayStr();
+                    const count = data.records.filter(function(r) { return r.date === today; }).length;
+                    showToast('📅 今日 ' + count + ' 笔记录');
+                    vibrate();
+                });
+
+                document.getElementById('todoCount').addEventListener('click', function() { goTo('plan.html'); });
+                document.getElementById('todoAddBtn').addEventListener('click', addTodayTodo);
+                document.getElementById('todoInput').addEventListener('keydown', function(e) {
+                    if (e.key === 'Enter') addTodayTodo();
+                });
+                document.getElementById('todoList').addEventListener('click', function(e) {
+                    const button = e.target.closest('.todo-check');
+                    if (button) completeTodayTodo(Number(button.dataset.index));
+                });
+            });
+
+            // 页面重新获得焦点时刷新数据
+            window.addEventListener('focus', function() {
+                updateToday();
+                updateTodayTodo();
+            });
+            window.addEventListener('bill-summary-updated', updateToday);
+
+        })();
+    </script>
+</body>
+</html>

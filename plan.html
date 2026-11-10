@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>月计划</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        html, body { width: 100%; height: 100vh; height: 100dvh; background: #f5f9fc; display: flex; justify-content: center; align-items: center; overflow: hidden; }
+        body::before { content: ''; position: fixed; top: -30%; left: -20%; width: 70%; height: 70%; background: radial-gradient(circle at 20% 30%, rgba(52,211,153,0.06) 0%, rgba(56,189,248,0.04) 40%, transparent 70%); border-radius: 50%; pointer-events: none; animation: floatGlow 16s ease-in-out infinite alternate; z-index: 0; filter: blur(60px); }
+        body::after { content: ''; position: fixed; bottom: -20%; right: -15%; width: 60%; height: 60%; background: radial-gradient(circle at 70% 60%, rgba(56,189,248,0.05) 0%, rgba(52,211,153,0.03) 40%, transparent 70%); border-radius: 50%; pointer-events: none; animation: floatGlow 20s ease-in-out infinite alternate-reverse; z-index: 0; filter: blur(60px); }
+        @keyframes floatGlow { 0% { transform: translate(0,0) scale(1); opacity:0.5; } 100% { transform: translate(30px,-20px) scale(1.1); opacity:0.8; } }
+        .app { width: 100%; height: 100%; background: rgba(255,255,255,0.50); backdrop-filter: blur(32px) saturate(1.6); -webkit-backdrop-filter: blur(32px) saturate(1.6); padding: 2.5vh 2.8vw 1.8vh; display: flex; flex-direction: column; overflow: hidden; position: relative; z-index: 1; }
+        .header { display: flex; justify-content: space-between; align-items: center; font-size: clamp(18px, 5vw, 26px); font-weight: 700; color: #0c4a6e; flex-shrink: 0; }
+        .header button { border: none; border-radius: 30px; padding: 0.2vh 3vw; background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); color: #38bdf8; font-size: clamp(20px, 5.5vw, 28px); cursor: pointer; border: 1px solid rgba(255,255,255,0.3); line-height: 1.4; }
+        .header button:active { transform: scale(0.90); background: rgba(255,255,255,0.6); }
+        .calendar { margin-top: 1vh; background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); border-radius: clamp(20px, 5vw, 30px); padding: 1.2vh 2vw; border: 1px solid rgba(255,255,255,0.3); flex-shrink: 0; }
+        .week, .days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0.8vw; text-align: center; }
+        .week { color: #64748b; font-size: clamp(10px, 2.6vw, 14px); font-weight: 500; margin-bottom: 0.4vh; }
+        .day { height: clamp(32px, 7vh, 48px); border-radius: clamp(12px, 3vw, 18px); display: flex; align-items: center; justify-content: center; font-size: clamp(12px, 3.2vw, 17px); font-weight: 500; color: #0c4a6e; cursor: pointer; transition: 0.1s; background: transparent; }
+        .day:active { transform: scale(0.90); }
+        .day.active { background: linear-gradient(135deg, #34d399, #22d3ee); color: white; font-weight: 600; box-shadow: 0 4px 20px rgba(52,211,153,0.08); }
+        .day.plan { border-bottom: 3px solid #22d3ee; border-radius: 0; }
+        .day.plan.active { border-bottom: 3px solid white; }
+        .detail { flex: 1; margin-top: 0.8vh; background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); border-radius: clamp(20px, 5vw, 30px); padding: 1.2vh 3vw; border: 1px solid rgba(255,255,255,0.3); display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
+        .detail h3 { font-size: clamp(14px, 3.8vw, 20px); color: #0c4a6e; flex-shrink: 0; }
+        .plan-list { flex: 1; overflow-y: auto; margin: 0.4vh 0; }
+        .plan-list::-webkit-scrollbar { width: 2px; }
+        .plan-list::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #34d399, #22d3ee); border-radius: 10px; }
+        .plan-item { display: flex; justify-content: space-between; align-items: center; padding: 0.8vh 2vw; border-radius: clamp(12px, 3vw, 18px); background: rgba(255,255,255,0.4); margin-bottom: 0.4vh; border: 1px solid rgba(255,255,255,0.2); font-size: clamp(12px, 3.2vw, 16px); color: #0c4a6e; }
+        .plan-item button { border: none; background: rgba(244,114,182,0.15); color: #f472b6; padding: 0.2vh 2vw; border-radius: 30px; font-size: clamp(10px, 2.6vw, 14px); cursor: pointer; }
+        .plan-item button:active { transform: scale(0.90); }
+        .input-row { display: flex; gap: 2vw; margin-top: 0.4vh; flex-shrink: 0; }
+        .input-row input { flex: 1; padding: 1vh 3vw; border: none; border-radius: 30px; background: rgba(255,255,255,0.4); backdrop-filter: blur(8px); font-size: clamp(12px, 3.2vw, 16px); outline: none; border: 1px solid rgba(255,255,255,0.3); }
+        .input-row button { padding: 0.8vh 3vw; border: none; border-radius: 30px; background: linear-gradient(135deg, #34d399, #22d3ee); color: white; font-weight: 600; font-size: clamp(12px, 3.2vw, 16px); cursor: pointer; }
+        .input-row button:active { transform: scale(0.94); }
+        .empty-plan { color: #94a3b8; font-size: clamp(11px, 3vw, 15px); text-align: center; padding: 1vh 0; }
+        .toast { position: fixed; top: 4vh; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); backdrop-filter: blur(16px); color: white; padding: 1.2vh 5vw; border-radius: 40px; font-size: clamp(13px, 3.4vw, 18px); z-index: 500; opacity: 0; transition: 0.25s; pointer-events: none; border: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+        .toast.show { opacity: 1; }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="page-plan">
+<div class="app">
+    <div class="header">
+        <button id="prevMonthBtn">‹</button>
+        <div id="month"></div>
+        <button id="nextMonthBtn">›</button>
+    </div>
+    <div class="calendar">
+        <div class="week"><span>日</span><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span></div>
+        <div class="days" id="days"></div>
+    </div>
+    <div class="detail">
+        <h3 id="selectDate">📅 选择日期</h3>
+        <div class="plan-list" id="planList"></div>
+        <div class="input-row">
+            <input id="planInput" placeholder="输入计划内容">
+            <button id="addPlanBtn">＋ 添加</button>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="summary.js"></script>
+<script>
+    (function() {
+        var KEY = "my_calendar_plan";
+        var ROLLED_KEY = "my_calendar_plan_rolled";
+        var date = new Date();
+        var selected = "";
+        
+        function normalizeDateKey(key) {
+            var match = String(key).match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+            if (!match) return key;
+            return match[1] + '-' + match[2].padStart(2, '0') + '-' + match[3].padStart(2, '0');
+        }
+
+        function getData() {
+            var raw = {};
+            try { raw = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (_) {}
+            var normalized = {};
+            Object.keys(raw).forEach(function(key) {
+                var target = normalizeDateKey(key);
+                if (!Array.isArray(raw[key])) return;
+                if (!normalized[target]) normalized[target] = [];
+                normalized[target] = normalized[target].concat(raw[key]);
+            });
+            return normalized;
+        }
+        
+        function saveData(d) { 
+            try {
+                localStorage.setItem(KEY, JSON.stringify(d));
+                return true;
+            } catch (e) {
+                showToast('❌ 保存失败，请先导出备份');
+                return false;
+            }
+        }
+
+        function getRolledMeta() {
+            var raw = {};
+            try { raw = JSON.parse(localStorage.getItem(ROLLED_KEY) || '{}'); } catch (_) {}
+            var normalized = {};
+            Object.keys(raw).forEach(function(key) {
+                var target = normalizeDateKey(key);
+                if (!Array.isArray(raw[key])) return;
+                if (!normalized[target]) normalized[target] = [];
+                normalized[target] = normalized[target].concat(raw[key].map(Boolean));
+            });
+            return normalized;
+        }
+
+        function saveRolledMeta(meta) {
+            try { localStorage.setItem(ROLLED_KEY, JSON.stringify(meta)); return true; }
+            catch (_) { return false; }
+        }
+
+        function rolloverOverduePlans() {
+            var data = getData();
+            var rolledMeta = getRolledMeta();
+            var today = getTodayStr();
+            var moved = 0;
+            if (!rolledMeta[today]) rolledMeta[today] = [];
+            while (rolledMeta[today].length < (data[today] || []).length) rolledMeta[today].push(false);
+            Object.keys(data).sort().forEach(function(key) {
+                if (key < today && Array.isArray(data[key]) && data[key].length) {
+                    if (!data[today]) data[today] = [];
+                    moved += data[key].length;
+                    data[today] = data[today].concat(data[key]);
+                    rolledMeta[today] = rolledMeta[today].concat(data[key].map(function() { return true; }));
+                    delete data[key];
+                    delete rolledMeta[key];
+                }
+            });
+            if (moved) { saveData(data); saveRolledMeta(rolledMeta); }
+            return moved;
+        }
+
+        function escapeHtml(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, function(ch) { return { '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch]; }); }
+        
+        function vibrate() { 
+            if (navigator.vibrate) navigator.vibrate(6); 
+        }
+        
+        var toastTimer;
+        function showToast(msg) {
+            var el = document.getElementById('toast');
+            el.textContent = msg;
+            el.classList.add('show');
+            clearTimeout(toastTimer);
+            toastTimer = setTimeout(function() { el.classList.remove('show'); }, 1800);
+        }
+        
+        function getTodayStr() {
+            var d = new Date();
+            return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+        }
+        
+        function renderCalendar() {
+            var y = date.getFullYear(), m = date.getMonth();
+            document.getElementById("month").textContent = y + '年' + (m+1) + '月';
+            var box = document.getElementById("days");
+            box.innerHTML = "";
+            var first = new Date(y, m, 1).getDay();
+            var total = new Date(y, m+1, 0).getDate();
+            var data = getData();
+            var today = getTodayStr();
+            
+            for (var i = 0; i < first; i++) { 
+                box.innerHTML += "<div></div>"; 
+            }
+            
+            for (var d = 1; d <= total; d++) {
+                var key = y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+                var cls = "day";
+                if (key === today) cls += " active";
+                if (data[key] && data[key].length > 0) cls += " plan";
+                box.innerHTML += '<div class="' + cls + '" data-key="' + key + '">' + d + '</div>';
+            }
+            
+            box.querySelectorAll('.day').forEach(function(el) {
+                el.addEventListener('click', function() {
+                    var key = this.dataset.key;
+                    if (key) { 
+                        selectDay(key); 
+                        vibrate(); 
+                    }
+                });
+            });
+            
+            if (!selected) {
+                var todayKey = getTodayStr();
+                var exists = box.querySelector('[data-key="' + todayKey + '"]');
+                if (exists) {
+                    selectDay(todayKey);
+                } else {
+                    var firstKey = y + '-' + String(m+1).padStart(2,'0') + '-01';
+                    selectDay(firstKey);
+                }
+            } else {
+                var parts = selected.split('-');
+                if (parseInt(parts[0]) !== y || parseInt(parts[1]) !== m+1) {
+                    var todayKey = getTodayStr();
+                    var exists = box.querySelector('[data-key="' + todayKey + '"]');
+                    if (exists) {
+                        selectDay(todayKey);
+                    } else {
+                        var firstKey = y + '-' + String(m+1).padStart(2,'0') + '-01';
+                        selectDay(firstKey);
+                    }
+                } else {
+                    renderPlans();
+                }
+            }
+        }
+        
+        function selectDay(key) {
+            selected = key;
+            document.getElementById("selectDate").textContent = '📅 ' + key;
+            renderPlans();
+            document.querySelectorAll('.day').forEach(function(el) {
+                el.classList.remove('active');
+                if (el.dataset.key === key) el.classList.add('active');
+            });
+        }
+        
+        function renderPlans() {
+            var data = getData();
+            var list = data[selected] || [];
+            var container = document.getElementById("planList");
+            if (list.length === 0) {
+                container.innerHTML = '<div class="empty-plan">📭 暂无计划，添加一条吧</div>';
+                return;
+            }
+            var html = '';
+            list.forEach(function(text, idx) {
+                html += '<div class="plan-item"><span>' + escapeHtml(text) + '</span><button data-idx="' + idx + '">删除</button></div>';
+            });
+            container.innerHTML = html;
+            container.querySelectorAll('.plan-item button').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.stopPropagation();
+                    var idx = parseInt(this.dataset.idx);
+                    deletePlan(idx);
+                });
+            });
+        }
+        
+        function addPlan() {
+            var input = document.getElementById("planInput");
+            var text = input.value.trim();
+            if (!text) { 
+                showToast('⚠️ 请输入计划内容'); 
+                vibrate(); 
+                return; 
+            }
+            if (!selected) { 
+                showToast('⚠️ 请先选择日期'); 
+                vibrate(); 
+                return; 
+            }
+            var data = getData();
+            if (!data[selected]) data[selected] = [];
+            data[selected].push(text);
+            if (!saveData(data)) return;
+            var rolledMeta = getRolledMeta();
+            if (!rolledMeta[selected]) rolledMeta[selected] = [];
+            while (rolledMeta[selected].length < data[selected].length - 1) rolledMeta[selected].push(false);
+            rolledMeta[selected].push(false);
+            saveRolledMeta(rolledMeta);
+            input.value = '';
+            renderPlans();
+            renderCalendar();
+            showToast('✅ 已添加计划');
+            vibrate();
+        }
+        
+        function deletePlan(idx) {
+            if (!selected) return;
+            var data = getData();
+            if (!data[selected] || data[selected].length <= idx) return;
+            data[selected].splice(idx, 1);
+            if (data[selected].length === 0) delete data[selected];
+            if (!saveData(data)) return;
+            var rolledMeta = getRolledMeta();
+            if (Array.isArray(rolledMeta[selected])) {
+                rolledMeta[selected].splice(idx, 1);
+                if (!rolledMeta[selected].length) delete rolledMeta[selected];
+                saveRolledMeta(rolledMeta);
+            }
+            renderPlans();
+            renderCalendar();
+            showToast('已删除');
+            vibrate();
+        }
+        
+        function changeMonth(delta) {
+            date.setMonth(date.getMonth() + delta);
+            selected = "";
+            renderCalendar();
+            vibrate();
+        }
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            date = new Date();
+            selected = "";
+            var movedPlans = rolloverOverduePlans();
+            renderCalendar();
+            if (movedPlans) showToast('📌 已顺延 ' + movedPlans + ' 项未完成计划');
+            
+            // 左上角：切换到上一个月
+            document.getElementById('prevMonthBtn').addEventListener('click', function() { 
+                changeMonth(-1); 
+            });
+            
+            // 右上角：切换到下一个月
+            document.getElementById('nextMonthBtn').addEventListener('click', function() { 
+                changeMonth(1); 
+            });
+            
+            // 添加计划
+            document.getElementById('addPlanBtn').addEventListener('click', addPlan);
+            document.getElementById('planInput').addEventListener('keypress', function(e) {
+                if (e.key === 'Enter') addPlan();
+            });
+            
+            // ===== 仅右滑返回首页（左滑无动作） =====
+            var startX = 0;
+            var startY = 0;
+            document.addEventListener('touchstart', function(e) { 
+                startX = e.touches[0].clientX;
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+            
+            document.addEventListener('touchend', function(e) {
+                var endX = e.changedTouches[0].clientX;
+                var endY = e.changedTouches[0].clientY;
+                var deltaX = startX - endX;
+                var deltaY = Math.abs(startY - endY);
+                // 手指向右滑时 deltaX 为负数
+                if (deltaX < -80 && Math.abs(deltaX) > deltaY * 1.5) {
+                    vibrate();
+                    window.location.href = 'index.html'; 
+                }
+                // 左滑无动作
+            }, { passive: true });
+        });
+    })();
+</script>
+</body>
+</html>

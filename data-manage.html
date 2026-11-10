@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>数据管理</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        html, body { width: 100%; min-height: 100vh; min-height: 100dvh; background: #f5f9fc; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; overflow: hidden; position: relative; }
+        body::before { content: ''; position: fixed; top: -30%; left: -20%; width: 70%; height: 70%; background: radial-gradient(circle at 20% 30%, rgba(52,211,153,0.06) 0%, rgba(56,189,248,0.04) 40%, transparent 70%); border-radius: 50%; pointer-events: none; animation: floatGlow 16s ease-in-out infinite alternate; z-index: 0; filter: blur(60px); }
+        body::after { content: ''; position: fixed; bottom: -20%; right: -15%; width: 60%; height: 60%; background: radial-gradient(circle at 70% 60%, rgba(56,189,248,0.05) 0%, rgba(52,211,153,0.03) 40%, transparent 70%); border-radius: 50%; pointer-events: none; animation: floatGlow 20s ease-in-out infinite alternate-reverse; z-index: 0; filter: blur(60px); }
+        @keyframes floatGlow { 0% { transform: translate(0,0) scale(1); opacity:0.5; } 100% { transform: translate(30px,-20px) scale(1.1); opacity:0.8; } }
+        .bubble { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: inset 0 -8px 30px rgba(255,255,255,0.2), 0 8px 40px rgba(52,211,153,0.03); animation: bubbleFloat 22s ease-in-out infinite alternate; }
+        .bubble::after { content: ''; position: absolute; top: 12%; left: 22%; width: 35%; height: 22%; background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%); border-radius: 50%; transform: rotate(-25deg); }
+        .bubble:nth-child(1) { width: 30vmin; height: 30vmin; top: 2%; left: -2%; background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3), rgba(52,211,153,0.03) 60%); animation-duration: 24s; }
+        .bubble:nth-child(2) { width: 22vmin; height: 22vmin; bottom: 10%; right: 2%; background: radial-gradient(circle at 40% 25%, rgba(255,255,255,0.35), rgba(56,189,248,0.04) 60%); animation-duration: 28s; animation-delay: -5s; }
+        .bubble:nth-child(3) { width: 14vmin; height: 14vmin; top: 40%; left: 80%; background: radial-gradient(circle at 35% 20%, rgba(255,255,255,0.4), rgba(52,211,153,0.04) 60%); animation-duration: 20s; animation-delay: -9s; }
+        .bubble:nth-child(4) { width: 18vmin; height: 18vmin; top: 18%; right: 18%; background: radial-gradient(circle at 25% 20%, rgba(255,255,255,0.25), rgba(56,189,248,0.03) 60%); animation-duration: 26s; animation-delay: -3s; }
+        @keyframes bubbleFloat { 0% { transform: translate(0,0) scale(1) rotate(0deg); opacity:0.4; } 100% { transform: translate(-20px,-25px) scale(1.06) rotate(6deg); opacity:0.8; } }
+        .app-container { width: 100%; height: 100vh; height: 100dvh; background: rgba(255,255,255,0.50); backdrop-filter: blur(32px) saturate(1.6); -webkit-backdrop-filter: blur(32px) saturate(1.6); border-radius: 0; padding: 2.5vh 2.8vw 1.8vh; box-shadow: 0 20px 80px rgba(0,0,0,0.02), 0 8px 40px rgba(52,211,153,0.03), inset 0 1px 0 rgba(255,255,255,0.7); border: none; position: relative; z-index: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-fixed { flex-shrink: 0; position: relative; z-index: 2; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6vh; }
+        .header h1 { font-size: clamp(16px, 4.5vw, 22px); font-weight: 700; color: #0c4a6e; }
+        .header .back { font-size: clamp(20px, 5.5vw, 28px); background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); padding: 0.2vh 3vw; border-radius: 30px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); line-height: 1.4; }
+        .header .back:active { transform: scale(0.92); background: rgba(255,255,255,0.7); }
+        .stats-mini { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2vw; margin-bottom: 0.8vh; }
+        .stat-card { background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); border-radius: clamp(14px, 4vw, 24px); padding: 0.8vh 0.5vw; text-align: center; border: 1px solid rgba(255,255,255,0.3); }
+        .stat-card .num { font-size: clamp(14px, 4.2vw, 24px); font-weight: 700; color: #0c4a6e; }
+        .stat-card .label { font-size: clamp(8px, 2.2vw, 12px); color: #64748b; }
+        .scroll-area { flex: 1; overflow-y: auto; margin: 0 -0.8vw; padding: 0 0.8vw; min-height: 0; position: relative; z-index: 1; }
+        .scroll-area::-webkit-scrollbar { width: 3px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #34d399, #22d3ee); border-radius: 10px; }
+        .summary-settings { display: grid; gap: 0.7vh; margin-bottom: 1vh; }
+        .summary-setting { display: flex; align-items: center; gap: 3vw; padding: 1.2vh 3vw; background: rgba(255,255,255,0.55); border: 1px solid rgba(255,255,255,0.75); border-radius: clamp(16px, 4vw, 24px); }
+        .summary-setting .copy { flex: 1; min-width: 0; }
+        .summary-setting .title { color: #0c4a6e; font-size: clamp(13px, 3.4vw, 18px); font-weight: 700; }
+        .summary-setting .desc { color: #64748b; font-size: clamp(9px, 2.3vw, 12px); line-height: 1.45; margin-top: 0.2vh; }
+        .summary-switch { width: 52px; height: 30px; flex: 0 0 auto; padding: 3px; border: 0; border-radius: 999px; background: #cbd5e1; cursor: pointer; transition: background .2s ease; }
+        .summary-switch .knob { display: block; width: 24px; height: 24px; border-radius: 50%; background: #fff; box-shadow: 0 2px 8px rgba(15,23,42,.18); transition: transform .2s ease; }
+        .summary-switch[aria-checked="true"] { background: linear-gradient(135deg, #34d399, #22d3ee); }
+        .summary-switch[aria-checked="true"] .knob { transform: translateX(22px); }
+        .summary-note { color: #64748b; font-size: clamp(9px, 2.3vw, 12px); line-height: 1.45; padding: 0 2vw 0.4vh; }
+        .btn-group { display: flex; flex-direction: column; gap: 0.6vh; }
+        .btn { width: 100%; padding: 1.2vh 0; border: none; border-radius: 40px; font-size: clamp(13px, 3.6vw, 20px); font-weight: 600; cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center; gap: 1.5vw; }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary { background: linear-gradient(135deg, #34d399, #22d3ee); color: white; box-shadow: 0 4px 20px rgba(52,211,153,0.12); }
+        .btn-warning { background: linear-gradient(135deg, #fbbf24, #f59e0b); color: white; box-shadow: 0 4px 20px rgba(251,191,36,0.12); }
+        .btn-danger { background: linear-gradient(135deg, #f472b6, #ec4899); color: white; box-shadow: 0 4px 20px rgba(244,114,182,0.12); }
+        .footer-tip { background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); border-radius: clamp(14px, 4vw, 22px); padding: 0.6vh 3vw; border: 1px solid rgba(255,255,255,0.3); margin-top: 0.6vh; flex-shrink: 0; }
+        .footer-tip .tip-title { font-weight: 600; color: #0c4a6e; font-size: clamp(10px, 2.6vw, 14px); }
+        .footer-tip .tip-desc { font-size: clamp(9px, 2.2vw, 12px); color: #64748b; }
+        .toast { position: fixed; top: 4vh; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); backdrop-filter: blur(16px); color: white; padding: 1.2vh 5vw; border-radius: 40px; font-size: clamp(13px, 3.4vw, 18px); z-index: 500; opacity: 0; transition: 0.25s; pointer-events: none; border: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+        .toast.show { opacity: 1; }
+        .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.04); backdrop-filter: blur(16px); align-items: center; justify-content: center; z-index: 400; }
+        .modal-overlay.open { display: flex; }
+        .modal-box { background: rgba(255,255,255,0.7); backdrop-filter: blur(28px); border-radius: clamp(32px, 10vw, 52px); padding: 3vh 5vw; max-width: 400px; width: 86%; box-shadow: 0 30px 80px rgba(0,0,0,0.02); border: 1px solid rgba(255,255,255,0.3); max-height: 90vh; overflow-y: auto; }
+        .modal-box h3 { color: #0c4a6e; font-size: clamp(17px, 4.5vw, 24px); }
+        .modal-box .sub { color: #64748b; font-size: clamp(11px, 3vw, 16px); margin: 0.4vh 0 0.8vh; }
+        .modal-box textarea { width: 100%; height: 20vh; padding: 1.2vh 3vw; border-radius: clamp(14px, 4vw, 22px); border: 2px solid rgba(0,0,0,0.04); font-size: clamp(10px, 2.4vw, 14px); font-family: monospace; outline: none; resize: vertical; background: rgba(255,255,255,0.3); backdrop-filter: blur(4px); }
+        .modal-box textarea:focus { border-color: #34d399; }
+        .modal-box .data-content { background: #0c4a6e; border-radius: clamp(12px, 3.5vw, 20px); padding: 1.2vh 3vw; font-size: clamp(9px, 2.2vw, 13px); font-family: monospace; max-height: 22vh; overflow-y: auto; white-space: pre-wrap; word-break: break-all; color: #93c5fd; line-height: 1.5; }
+        .modal-box .error-msg { background: #fce4ec; color: #f472b6; padding: 0.6vh 3.5vw; border-radius: 30px; font-size: clamp(11px, 3vw, 16px); display: none; margin: 0.6vh 0; }
+        .modal-box .error-msg.show { display: block; }
+        .modal-btns { display: flex; gap: 2.5vw; margin-top: 1vh; flex-wrap: wrap; }
+        .modal-btns button { flex: 1; padding: 1.2vh 0; border: none; border-radius: 40px; font-weight: 600; font-size: clamp(12px, 3.2vw, 17px); cursor: pointer; transition: 0.1s; min-width: 12vw; }
+        .modal-btns button:active { transform: scale(0.94); }
+        .btn-cancel { background: rgba(240,249,255,0.4); backdrop-filter: blur(4px); color: #38bdf8; }
+        .btn-confirm { background: linear-gradient(135deg, #34d399, #22d3ee); color: white; box-shadow: 0 4px 20px rgba(52,211,153,0.08); }
+        .btn-copy { background: linear-gradient(135deg, #34d399, #22d3ee); color: white; }
+        .btn-paste { background: linear-gradient(135deg, #34d399, #10b981); color: white; }
+        .char-count { text-align: right; font-size: clamp(8px, 2vw, 12px); color: #64748b; margin-top: 0.2vh; }
+        .progress-wrap { display: none; margin: 0.4vh 0; }
+        .progress-wrap.active { display: block; }
+        .progress-bar { width: 100%; height: 4px; background: rgba(0,0,0,0.04); border-radius: 6px; overflow: hidden; }
+        .progress-bar .fill { height: 100%; background: linear-gradient(90deg, #34d399, #22d3ee); width: 0%; transition: width 0.3s; }
+        .progress-text { font-size: clamp(9px, 2.4vw, 13px); color: #64748b; text-align: center; }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="page-data">
+<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+<div class="app-container">
+    <div class="top-fixed">
+        <div class="header"><span class="back" id="backBtn">‹</span><h1>📦 数据管理</h1><span style="width:8vw;"></span></div>
+        <div class="stats-mini">
+            <div class="stat-card"><div class="num" id="totalBooks">0</div><div class="label">账本</div></div>
+            <div class="stat-card"><div class="num" id="totalRecords">0</div><div class="label">记录</div></div>
+            <div class="stat-card"><div class="num" id="dataSize">0KB</div><div class="label">大小</div></div>
+        </div>
+    </div>
+    <div class="scroll-area">
+        <div class="summary-settings">
+            <div class="summary-setting">
+                <div class="copy"><div class="title">📅 日汇总</div><div class="desc">每天 23:59 按收支类型和类别合并当天记录。</div></div>
+                <button class="summary-switch" id="dailySummarySwitch" type="button" role="switch" aria-checked="false" aria-label="日汇总"><span class="knob"></span></button>
+            </div>
+            <div class="summary-setting">
+                <div class="copy"><div class="title">🗓️ 月汇总</div><div class="desc">每月最后一天 23:59 合并整月记录，统一记在月末。</div></div>
+                <button class="summary-switch" id="monthlySummarySwitch" type="button" role="switch" aria-checked="false" aria-label="月汇总"><span class="knob"></span></button>
+            </div>
+            <div class="summary-note">应用未打开时，会在下次打开时自动补汇总。关闭只停止后续汇总，已合并记录不会自动拆分。</div>
+        </div>
+        <div class="btn-group">
+            <button class="btn btn-primary" id="exportBtn">📤 导出数据</button>
+            <button class="btn btn-warning" id="importBtn">📝 导入数据</button>
+            <button class="btn btn-danger" id="clearBtn">🗑️ 清空所有</button>
+        </div>
+        <div class="progress-wrap" id="progressWrap">
+            <div class="progress-text" id="progressText">处理中...</div>
+            <div class="progress-bar"><div class="fill" id="progressFill"></div></div>
+        </div>
+        <div class="footer-tip"><div class="tip-title">💡 完整备份</div><div class="tip-desc">导出内容包含全部账本和日历计划；仍兼容以前导出的账本 JSON。</div></div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<div class="modal-overlay" id="exportModal"><div class="modal-box"><h3>📤 导出数据</h3><div class="sub">点击复制按钮保存数据</div><div class="data-content" id="exportDataContent">加载中...</div><div class="modal-btns"><button class="btn-cancel" id="exportCloseBtn">关闭</button><button class="btn-copy" id="exportCopyBtn">📋 复制</button></div></div></div>
+<div class="modal-overlay" id="importModal"><div class="modal-box"><h3>📝 导入数据</h3><div class="sub">粘贴 JSON 数据</div><textarea id="importTextarea" placeholder='{"账本":{"records":[]}}'></textarea><div class="char-count" id="charCount">0 字符</div><div class="error-msg" id="errorMsg">❌ 格式错误</div><div class="modal-btns"><button class="btn-cancel" id="importCloseBtn">取消</button><button class="btn-paste" id="pasteBtn">📋 粘贴</button><button class="btn-confirm" id="importConfirmBtn">导入</button></div></div></div>
+<script src="summary.js"></script>
+<script>
+    const BOOKS_KEY = 'my_books_data', CURRENT_KEY = 'my_current_book', PLANS_KEY = 'my_calendar_plan';
+    function getBooks() { try { const r = localStorage.getItem(BOOKS_KEY); if (!r) { const d = { '账本': { records: [] } }; localStorage.setItem(BOOKS_KEY, JSON.stringify(d)); return d; } return JSON.parse(r); } catch { return { '账本': { records: [] } }; } }
+    function saveBooks(b) { localStorage.setItem(BOOKS_KEY, JSON.stringify(b)); }
+    function getPlans() { try { const p = JSON.parse(localStorage.getItem(PLANS_KEY) || '{}'); return p && typeof p === 'object' && !Array.isArray(p) ? p : {}; } catch { return {}; } }
+    function getCurrentBook() { let n = localStorage.getItem(CURRENT_KEY); const b = getBooks(); if (!n || !b[n]) { const f = Object.keys(b)[0] || '账本'; localStorage.setItem(CURRENT_KEY, f); return f; } return n; }
+    function updateStats() { const b = getBooks(); const keys = Object.keys(b); let total = 0; keys.forEach(k => total += (b[k].records || []).length); const size = ((JSON.stringify(b).length + JSON.stringify(getPlans()).length) / 1024).toFixed(1); document.getElementById('totalBooks').textContent = keys.length; document.getElementById('totalRecords').textContent = total; document.getElementById('dataSize').textContent = size + 'KB'; }
+    function validateBooks(books) {
+        if (!books || typeof books !== 'object' || Array.isArray(books)) throw new Error('账本格式错误');
+        const names = Object.keys(books);
+        if (!names.length) throw new Error('账本数据为空');
+        if (names.length > 100) throw new Error('账本数量过多');
+        let total = 0;
+        names.forEach(name => {
+            if (!name.trim() || name.length > 30) throw new Error('账本名称不合法');
+            const book = books[name];
+            if (!book || !Array.isArray(book.records)) throw new Error('账本缺少 records 字段');
+            total += book.records.length;
+            book.records.forEach((r, index) => {
+                if (!r || typeof r !== 'object') throw new Error(`${name} 第 ${index + 1} 条记录格式错误`);
+                if (r.type !== 'income' && r.type !== 'expense') throw new Error(`${name} 第 ${index + 1} 条收支类型错误`);
+                if (!Number.isFinite(Number(r.amount)) || Number(r.amount) <= 0) throw new Error(`${name} 第 ${index + 1} 条金额错误`);
+                if (typeof r.date !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(r.date)) throw new Error(`${name} 第 ${index + 1} 条日期错误`);
+                if (typeof r.category !== 'string' || !r.category.trim()) throw new Error(`${name} 第 ${index + 1} 条分类错误`);
+                if (r.note != null && typeof r.note !== 'string') throw new Error(`${name} 第 ${index + 1} 条备注错误`);
+                if (r.id == null || String(r.id).length > 100) throw new Error(`${name} 第 ${index + 1} 条编号错误`);
+            });
+        });
+        if (total > 100000) throw new Error('记录数量过多');
+        return total;
+    }
+    function validatePlans(plans) {
+        if (!plans || typeof plans !== 'object' || Array.isArray(plans)) throw new Error('计划格式错误');
+        Object.keys(plans).forEach(date => {
+            if (!/^\d{4}-\d{1,2}-\d{1,2}$/.test(date) || !Array.isArray(plans[date]) || plans[date].some(text => typeof text !== 'string')) throw new Error('计划数据格式错误');
+        });
+    }
+    function vibrate() { if (navigator.vibrate) navigator.vibrate(6); }
+    let toastTimer; function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 2000); }
+    function copyText(text) { if (navigator.clipboard && navigator.clipboard.writeText) { navigator.clipboard.writeText(text).then(() => showToast('✅ 已复制')).catch(() => fallbackCopy(text)); } else fallbackCopy(text); }
+    function fallbackCopy(text) { const ta = document.createElement('textarea'); ta.value = text; ta.style.position = 'fixed'; ta.style.left = '-9999px'; document.body.appendChild(ta); ta.select(); try { document.execCommand('copy'); showToast('✅ 已复制'); } catch(e) { showToast('❌ 复制失败'); } document.body.removeChild(ta); }
+    function showProgress(text, pct) { const w = document.getElementById('progressWrap'); w.classList.add('active'); document.getElementById('progressText').textContent = text; document.getElementById('progressFill').style.width = Math.min(pct,100) + '%'; }
+    function hideProgress() { document.getElementById('progressWrap').classList.remove('active'); document.getElementById('progressFill').style.width = '0%'; }
+    function renderSummarySettings() {
+        const settings = window.BillSummary ? BillSummary.getSettings() : { daily:false, monthly:false };
+        document.getElementById('dailySummarySwitch').setAttribute('aria-checked', settings.daily ? 'true' : 'false');
+        document.getElementById('monthlySummarySwitch').setAttribute('aria-checked', settings.monthly ? 'true' : 'false');
+    }
+    function toggleSummary(kind) {
+        if (!window.BillSummary) { showToast('❌ 汇总功能加载失败'); return; }
+        const current = BillSummary.getSettings();
+        const enabled = !current[kind];
+        BillSummary.setEnabled(kind, enabled);
+        renderSummarySettings();
+        updateStats();
+        showToast((enabled ? '✅ 已开启' : '已关闭') + (kind === 'daily' ? '日汇总' : '月汇总'));
+        vibrate();
+    }
+    document.getElementById('exportBtn').addEventListener('click', function() {
+        vibrate(); const backup = { app: '云简', version: 3, exportedAt: new Date().toISOString(), books: getBooks(), currentBook: getCurrentBook(), plans: getPlans(), summarySettings: window.BillSummary ? BillSummary.getSettings() : undefined }; const str = JSON.stringify(backup, null, 2);
+        document.getElementById('exportDataContent').textContent = str;
+        document.getElementById('exportModal').classList.add('open');
+    });
+    document.getElementById('exportCopyBtn').addEventListener('click', function() { copyText(document.getElementById('exportDataContent').textContent); });
+    document.getElementById('exportCloseBtn').addEventListener('click', function() { document.getElementById('exportModal').classList.remove('open'); });
+    document.getElementById('importBtn').addEventListener('click', function() { vibrate(); document.getElementById('importTextarea').value = ''; document.getElementById('charCount').textContent = '0 字符'; document.getElementById('errorMsg').classList.remove('show'); document.getElementById('importModal').classList.add('open'); setTimeout(() => document.getElementById('importTextarea').focus(), 200); });
+    document.getElementById('importTextarea').addEventListener('input', function() { document.getElementById('charCount').textContent = this.value.length + ' 字符'; document.getElementById('errorMsg').classList.remove('show'); });
+    document.getElementById('pasteBtn').addEventListener('click', async function() { try { if (navigator.clipboard && navigator.clipboard.readText) { const t = await navigator.clipboard.readText(); document.getElementById('importTextarea').value = t; document.getElementById('charCount').textContent = t.length + ' 字符'; showToast('✅ 已粘贴'); } else showToast('⚠️ 请手动粘贴'); } catch(e) { showToast('⚠️ 请手动粘贴'); } });
+    document.getElementById('importConfirmBtn').addEventListener('click', function() {
+        const text = document.getElementById('importTextarea').value.trim();
+        if (!text) { showToast('⚠️ 请粘贴数据'); return; }
+        try {
+            const parsed = JSON.parse(text);
+            const isFullBackup = parsed && parsed.version >= 2 && parsed.books;
+            const books = isFullBackup ? parsed.books : parsed;
+            const plans = isFullBackup ? (parsed.plans || {}) : getPlans();
+            const summarySettings = isFullBackup && parsed.summarySettings ? parsed.summarySettings : null;
+            const total = validateBooks(books);
+            validatePlans(plans);
+            const names = Object.keys(books);
+            const selectedBook = isFullBackup && books[parsed.currentBook] ? parsed.currentBook : names[0];
+            if (confirm(`确定导入？\n📊 ${names.length} 个账本，📝 ${total} 条记录\n📅 ${Object.keys(plans).length} 天计划\n⚠️ 当前数据将被替换`)) {
+                showProgress('导入中...', 50);
+                setTimeout(() => {
+                    try {
+                        saveBooks(books);
+                        if (window.BillSummary) BillSummary.clearGeneratedNotes();
+                        localStorage.setItem(CURRENT_KEY, selectedBook);
+                        if (isFullBackup) localStorage.setItem(PLANS_KEY, JSON.stringify(plans));
+                        if (summarySettings && window.BillSummary) BillSummary.replaceSettings(summarySettings);
+                        showProgress('完成', 100);
+                        setTimeout(() => {
+                            hideProgress();
+                            updateStats();
+                            renderSummarySettings();
+                            document.getElementById('importModal').classList.remove('open');
+                            showToast('✅ 完整数据导入成功');
+                        }, 400);
+                    } catch(e) {
+                        hideProgress();
+                        showToast('❌ 保存失败，存储空间可能不足');
+                    }
+                }, 300);
+            }
+        } catch(e) {
+            document.getElementById('errorMsg').textContent = '❌ ' + e.message;
+            document.getElementById('errorMsg').classList.add('show');
+        }
+    });
+    document.getElementById('importCloseBtn').addEventListener('click', function() { document.getElementById('importModal').classList.remove('open'); });
+    document.getElementById('dailySummarySwitch').addEventListener('click', function() { toggleSummary('daily'); });
+    document.getElementById('monthlySummarySwitch').addEventListener('click', function() { toggleSummary('monthly'); });
+    document.getElementById('clearBtn').addEventListener('click', function() { vibrate(); if (confirm('🗑️ 确定清空全部账本和计划？不可恢复！')) { if (confirm('⚠️ 最后确认：建议先导出备份，仍要清空吗？')) { const def = { '账本': { records: [] } }; saveBooks(def); localStorage.setItem(CURRENT_KEY, '账本'); localStorage.setItem(PLANS_KEY, '{}'); updateStats(); showToast('🗑️ 全部数据已清空'); } } });
+    document.getElementById('backBtn').addEventListener('click', function() { vibrate(); window.location.href = 'index.html'; });
+    document.querySelectorAll('.modal-overlay').forEach(el => { el.addEventListener('click', function(e) { if (e.target === this) this.classList.remove('open'); }); });
+    window.addEventListener('bill-summary-updated', updateStats);
+    document.addEventListener('DOMContentLoaded', function() { updateStats(); renderSummarySettings(); });
+</script>
+</body>
+</html>

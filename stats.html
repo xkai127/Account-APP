@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>账单统计</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        html, body { width: 100%; min-height: 100vh; min-height: 100dvh; background: #f5f9fc; display: flex; justify-content: center; align-items: center; padding: 0; margin: 0; overflow: hidden; position: relative; }
+        body::before { content: ''; position: fixed; top: -30%; left: -20%; width: 70%; height: 70%; background: radial-gradient(circle at 20% 30%, rgba(52,211,153,0.06) 0%, rgba(56,189,248,0.04) 40%, transparent 70%); border-radius: 50%; pointer-events: none; animation: floatGlow 16s ease-in-out infinite alternate; z-index: 0; filter: blur(60px); }
+        body::after { content: ''; position: fixed; bottom: -20%; right: -15%; width: 60%; height: 60%; background: radial-gradient(circle at 70% 60%, rgba(56,189,248,0.05) 0%, rgba(52,211,153,0.03) 40%, transparent 70%); border-radius: 50%; pointer-events: none; animation: floatGlow 20s ease-in-out infinite alternate-reverse; z-index: 0; filter: blur(60px); }
+        @keyframes floatGlow { 0% { transform: translate(0,0) scale(1); opacity:0.5; } 100% { transform: translate(30px,-20px) scale(1.1); opacity:0.8; } }
+        .bubble { position: fixed; border-radius: 50%; pointer-events: none; z-index: 0; border: 1px solid rgba(255,255,255,0.5); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); box-shadow: inset 0 -8px 30px rgba(255,255,255,0.2), 0 8px 40px rgba(52,211,153,0.03); animation: bubbleFloat 22s ease-in-out infinite alternate; }
+        .bubble::after { content: ''; position: absolute; top: 12%; left: 22%; width: 35%; height: 22%; background: radial-gradient(circle, rgba(255,255,255,0.6) 0%, transparent 70%); border-radius: 50%; transform: rotate(-25deg); }
+        .bubble:nth-child(1) { width: 30vmin; height: 30vmin; top: 2%; left: -2%; background: radial-gradient(circle at 30% 20%, rgba(255,255,255,0.3), rgba(52,211,153,0.03) 60%); animation-duration: 24s; }
+        .bubble:nth-child(2) { width: 22vmin; height: 22vmin; bottom: 10%; right: 2%; background: radial-gradient(circle at 40% 25%, rgba(255,255,255,0.35), rgba(56,189,248,0.04) 60%); animation-duration: 28s; animation-delay: -5s; }
+        .bubble:nth-child(3) { width: 14vmin; height: 14vmin; top: 40%; left: 80%; background: radial-gradient(circle at 35% 20%, rgba(255,255,255,0.4), rgba(52,211,153,0.04) 60%); animation-duration: 20s; animation-delay: -9s; }
+        .bubble:nth-child(4) { width: 18vmin; height: 18vmin; top: 18%; right: 18%; background: radial-gradient(circle at 25% 20%, rgba(255,255,255,0.25), rgba(56,189,248,0.03) 60%); animation-duration: 26s; animation-delay: -3s; }
+        @keyframes bubbleFloat { 0% { transform: translate(0,0) scale(1) rotate(0deg); opacity:0.4; } 100% { transform: translate(-20px,-25px) scale(1.06) rotate(6deg); opacity:0.8; } }
+        .app-container { width: 100%; height: 100vh; height: 100dvh; background: rgba(255,255,255,0.50); backdrop-filter: blur(32px) saturate(1.6); -webkit-backdrop-filter: blur(32px) saturate(1.6); border-radius: 0; padding: 2.5vh 2.8vw 1.8vh; box-shadow: 0 20px 80px rgba(0,0,0,0.02), 0 8px 40px rgba(52,211,153,0.03), inset 0 1px 0 rgba(255,255,255,0.7); border: none; position: relative; z-index: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .top-fixed { flex-shrink: 0; position: relative; z-index: 2; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6vh; }
+        .header h1 { font-size: clamp(16px, 4.5vw, 22px); font-weight: 700; color: #0c4a6e; }
+        .header .back { font-size: clamp(20px, 5.5vw, 28px); background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); padding: 0.2vh 3vw; border-radius: 30px; cursor: pointer; border: 1px solid rgba(255,255,255,0.3); line-height: 1.4; }
+        .header .back:active { transform: scale(0.92); background: rgba(255,255,255,0.7); }
+        .book-bar { text-align: center; font-size: clamp(10px, 2.6vw, 14px); color: #64748b; margin-bottom: 0.4vh; }
+        .book-bar span { background: linear-gradient(135deg, #34d399, #22d3ee); color: white; padding: 0.2vh 3vw; border-radius: 40px; }
+        .view-toggle { display: flex; gap: 2vw; margin-bottom: 0.4vh; }
+        .view-toggle button { flex: 1; padding: 0.6vh 0; border: none; border-radius: 30px; font-size: clamp(11px, 3vw, 16px); font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: #64748b; border: 1px solid rgba(255,255,255,0.2); }
+        .view-toggle button:active { transform: scale(0.94); }
+        .view-toggle .active-expense { background: #fce4ec; color: #f472b6; border-color: #f472b6; }
+        .view-toggle .active-income { background: #d1fae5; color: #34d399; border-color: #34d399; }
+        .time-tabs { display: flex; gap: 2vw; margin-bottom: 0.4vh; }
+        .time-tab { flex: 1; padding: 0.5vh 0; border: none; border-radius: 30px; font-size: clamp(10px, 2.8vw, 15px); font-weight: 600; cursor: pointer; background: rgba(255,255,255,0.2); backdrop-filter: blur(4px); color: #64748b; border: 1px solid rgba(255,255,255,0.2); }
+        .time-tab:active { transform: scale(0.94); }
+        .time-tab.active { background: rgba(52,211,153,0.10); color: #34d399; border-color: #34d399; }
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1.2vw; margin-bottom: 0.4vh; }
+        .stat-card { background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); border-radius: clamp(14px, 4vw, 24px); padding: 0.8vh 0.5vw; text-align: center; border: 1px solid rgba(255,255,255,0.3); }
+        .stat-card .num { font-size: clamp(13px, 3.8vw, 22px); font-weight: 700; color: #0c4a6e; }
+        .stat-card .num.income { color: #34d399; }
+        .stat-card .num.expense { color: #f472b6; }
+        .stat-card .label { font-size: clamp(8px, 2.2vw, 12px); color: #64748b; }
+        .time-selector { display: flex; justify-content: space-between; align-items: center; padding: 0.2vh 0 0.4vh; font-weight: 600; color: #0c4a6e; }
+        .time-selector button { background: rgba(255,255,255,0.3); backdrop-filter: blur(12px); border: none; padding: 0.2vh 2.5vw; border-radius: 40px; font-size: clamp(16px, 4.5vw, 24px); cursor: pointer; color: #38bdf8; border: 1px solid rgba(255,255,255,0.3); line-height: 1.4; }
+        .time-selector button:active { transform: scale(0.90); background: rgba(255,255,255,0.6); }
+        .time-selector span { font-size: clamp(12px, 3.5vw, 18px); }
+        .scroll-area { flex: 1; overflow-y: auto; margin: 0 -0.8vw; padding: 0 0.8vw; min-height: 0; position: relative; z-index: 1; }
+        .scroll-area::-webkit-scrollbar { width: 3px; }
+        .scroll-area::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #34d399, #22d3ee); border-radius: 10px; }
+        .chart-section { background: rgba(255,255,255,0.4); backdrop-filter: blur(12px); border-radius: clamp(14px, 4vw, 22px); padding: 0.8vh 2.5vw 1vh; margin-bottom: 0.4vh; border: 1px solid rgba(255,255,255,0.3); }
+        .chart-section .title { font-size: clamp(11px, 3vw, 16px); font-weight: 600; color: #0c4a6e; margin-bottom: 0.3vh; }
+        .chart-row { display: flex; flex-direction: row; align-items: center; gap: 1.5vw; flex-wrap: wrap; justify-content: center; }
+        .pie-wrapper { width: clamp(80px, 25vw, 140px); height: clamp(80px, 25vw, 140px); flex-shrink: 0; }
+        .pie-canvas { width: 100%; height: 100%; display: block; border-radius: 50%; }
+        .legend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.2vh 1.5vw; flex: 1; min-width: 20vw; }
+        .legend-item { display: flex; align-items: center; gap: 0.8vw; font-size: clamp(8px, 2.2vw, 12px); padding: 0.1vh 0; border-bottom: 1px solid rgba(0,0,0,0.03); }
+        .legend-dot { width: clamp(6px, 1.8vw, 10px); height: clamp(6px, 1.8vw, 10px); border-radius: 3px; flex-shrink: 0; }
+        .legend-name { color: #0c4a6e; font-weight: 500; flex: 1; font-size: clamp(8px, 2.2vw, 12px); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .legend-value { color: #64748b; font-size: clamp(7px, 2vw, 11px); }
+        .category-scroll { overflow-y: auto; max-height: 18vh; }
+        .category-scroll::-webkit-scrollbar { width: 2px; }
+        .category-scroll::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #34d399, #22d3ee); border-radius: 10px; }
+        .section-title-sm { font-size: clamp(11px, 3vw, 16px); font-weight: 600; color: #0c4a6e; margin: 0.3vh 0 0.2vh; }
+        .category-stat-item { background: rgba(255,255,255,0.4); backdrop-filter: blur(8px); border-radius: clamp(10px, 3vw, 18px); padding: 0.4vh 2.5vw; margin-bottom: 0.2vh; display: flex; align-items: center; gap: 2vw; border: 1px solid rgba(255,255,255,0.3); }
+        .category-stat-item .emoji { font-size: clamp(12px, 3.5vw, 20px); }
+        .category-stat-item .info { flex: 1; display: flex; justify-content: space-between; align-items: center; }
+        .category-stat-item .name { font-size: clamp(10px, 2.8vw, 15px); font-weight: 500; color: #0c4a6e; }
+        .category-stat-item .amount { font-size: clamp(10px, 2.8vw, 15px); font-weight: 600; }
+        .category-stat-item .amount.income { color: #34d399; }
+        .category-stat-item .amount.expense { color: #f472b6; }
+        .empty-state { text-align: center; padding: 1.5vh 2vw; color: #64748b; }
+        .empty-state .emoji { font-size: clamp(18px, 5vw, 28px); display: block; }
+        .toast { position: fixed; top: 4vh; left: 50%; transform: translateX(-50%); background: rgba(0,0,0,0.7); backdrop-filter: blur(16px); color: white; padding: 1.2vh 5vw; border-radius: 40px; font-size: clamp(13px, 3.4vw, 18px); z-index: 500; opacity: 0; transition: 0.25s; pointer-events: none; border: 1px solid rgba(255,255,255,0.06); white-space: nowrap; }
+        .toast.show { opacity: 1; }
+    </style>
+    <link rel="stylesheet" href="theme.css">
+</head>
+<body class="page-stats">
+<div class="bubble"></div><div class="bubble"></div><div class="bubble"></div><div class="bubble"></div>
+<div class="app-container">
+    <div class="top-fixed">
+        <div class="header"><span class="back" id="backBtn">‹</span><h1>📊 统计</h1><span style="width:8vw;"></span></div>
+        <div class="book-bar">📒 当前账本：<span id="bookName">账本</span> <span id="recordCount" style="background:#64748b;font-size:clamp(8px,2vw,11px);"></span></div>
+        <div class="view-toggle" id="viewToggle">
+            <button class="active-expense" data-view="expense" id="viewExpense">💸 支出</button>
+            <button data-view="income" id="viewIncome">💰 收入</button>
+        </div>
+        <div class="time-tabs">
+            <button class="time-tab active" data-mode="month" id="monthTab">📅 月</button>
+            <button class="time-tab" data-mode="year" id="yearTab">📆 年</button>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card"><div class="num income" id="totalIncome">¥0</div><div class="label">收入</div></div>
+            <div class="stat-card"><div class="num expense" id="totalExpense">¥0</div><div class="label">支出</div></div>
+            <div class="stat-card"><div class="num" id="totalBalance" style="color:#0c4a6e;">¥0</div><div class="label">结余</div></div>
+        </div>
+        <div class="time-selector"><button id="prevTime">‹</button><span id="timeDisplay">2026年7月</span><button id="nextTime">›</button></div>
+    </div>
+    <div class="scroll-area">
+        <div class="chart-section" id="chartSection">
+            <div class="title" id="chartTitle">📉 支出分类</div>
+            <div class="chart-row" id="chartRow">
+                <div class="pie-wrapper"><canvas id="pieCanvas" class="pie-canvas"></canvas></div>
+                <div class="legend-grid" id="legendGrid"></div>
+            </div>
+        </div>
+        <div>
+            <div class="section-title-sm" id="detailTitle">📉 支出明细</div>
+            <div class="category-scroll" id="categoryList"></div>
+        </div>
+    </div>
+</div>
+<div class="toast" id="toast"></div>
+<script src="summary.js"></script>
+<script>
+    const BOOKS_KEY = 'my_books_data', CURRENT_KEY = 'my_current_book';
+    function getBooks() { try { const r = localStorage.getItem(BOOKS_KEY); if (!r) { const d = { '账本': { records: [] } }; localStorage.setItem(BOOKS_KEY, JSON.stringify(d)); return d; } return JSON.parse(r); } catch { return { '账本': { records: [] } }; } }
+    function getCurrentBook() { const target = localStorage.getItem('stats_target_book'); if (target && getBooks()[target]) return target; let n = localStorage.getItem(CURRENT_KEY); const b = getBooks(); if (!n || !b[n]) { const f = Object.keys(b)[0] || '账本'; localStorage.setItem(CURRENT_KEY, f); return f; } return n; }
+    function getEmoji(cat) {
+        const map = { '餐饮':'🍜','咖啡':'🦌','水果':'🍎','零食':'🍿','购物':'🛍️','生活':'🏠','住房':'🏢','交通':'🚝','社交':'👥','娱乐':'🎮','书籍':'📚','学习':'📖','医疗':'💊','宠物':'🐾','服饰':'👕','玩具':'🧸','旅行':'✈️','汽车':'🚘','快递':'📦','维修':'🔧','转账':'📱','垫付':'💳','游戏':'🎯','余转':'🔄','工资':'💼','礼金':'🎁','理财':'📈','奖金':'💰','兼职':'👨‍💻','彩票':'🎰','摆摊':'🧺','退款':'💸' };
+        return map[cat] || '📦';
+    }
+    function escapeHtml(value) { return String(value == null ? '' : value).replace(/[&<>"']/g, ch => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[ch])); }
+    const PIE_COLORS = ['#FF6B6B','#FF9F43','#FECA57','#48DBFB','#0ABDE3','#A29BFE','#FD79A8','#FDCB6E','#00B894','#6C5CE7','#E17055','#00CEC9','#0984E3','#E84393','#F8A5C2','#74B9FF','#55EFC4','#FAB1A0','#81ECEC','#DDA0DD'];
+    let currentMode = 'month', currentDate = new Date();
+    let currentView = 'expense';
+    function getStatsData() {
+        const name = getCurrentBook(); const books = getBooks(); const data = books[name] || { records: [] };
+        const year = currentDate.getFullYear(), month = currentDate.getMonth()+1;
+        const prefix = currentMode === 'month' ? `${year}-${String(month).padStart(2,'0')}` : String(year);
+        const filtered = data.records.filter(r => r.date && r.date.startsWith(prefix));
+        let inc=0, exp=0; const catMap = {};
+        filtered.forEach(r => { const amt = Number(r.amount) || 0; if (r.type==='income') inc+=amt; else exp+=amt; const key = r.category || '其他'; if (!catMap[key]) catMap[key] = { income:0, expense:0, count:0, type:r.type }; if (r.type==='income') catMap[key].income += amt; else catMap[key].expense += amt; catMap[key].count++; if (!catMap[key].type) catMap[key].type = r.type; });
+        const expCats = [], incCats = [];
+        Object.keys(catMap).forEach(k => { const item = catMap[k]; if (item.expense > 0 || (item.income===0 && item.type==='expense')) expCats.push({ name:k, amount:item.expense, count:item.count, emoji:getEmoji(k) }); if (item.income > 0 || (item.expense===0 && item.type==='income')) incCats.push({ name:k, amount:item.income, count:item.count, emoji:getEmoji(k) }); });
+        expCats.sort((a,b)=>b.amount-a.amount); incCats.sort((a,b)=>b.amount-a.amount);
+        return { bookName:name, records:filtered, totalIncome:inc, totalExpense:exp, totalBalance:inc-exp, totalCount:filtered.length, expenseCategories:expCats, incomeCategories:incCats, timeLabel: currentMode==='month'?`${year}年${month}月`:`${year}年` };
+    }
+    function drawPieWithLabels(canvas, cats, total) {
+        const ctx = canvas.getContext('2d');
+        const rect = canvas.parentElement.getBoundingClientRect();
+        const size = Math.min(rect.width || 100, 100);
+        canvas.width = size; canvas.height = size;
+        const cx = size/2, cy = size/2, r = size/2 - 4;
+        ctx.clearRect(0, 0, size, size);
+        if (!cats || cats.length === 0 || total === 0) {
+            ctx.font = '12px sans-serif'; ctx.fillStyle = '#b0b8c4'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('无数据', cx, cy); return;
+        }
+        let start = -Math.PI/2;
+        cats.forEach((cat, idx) => {
+            const slice = (cat.amount / total) * 2 * Math.PI;
+            const end = start + slice;
+            const color = PIE_COLORS[idx % PIE_COLORS.length];
+            ctx.beginPath(); ctx.moveTo(cx, cy); ctx.arc(cx, cy, r, start, end); ctx.closePath();
+            ctx.fillStyle = color; ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1.5; ctx.stroke();
+            start = end;
+        });
+        ctx.beginPath(); ctx.arc(cx, cy, 3, 0, 2 * Math.PI); ctx.fillStyle = '#fff'; ctx.fill();
+        const legendGrid = document.getElementById('legendGrid');
+        let legendHtml = '';
+        const displayCats = cats.slice(0, 8);
+        displayCats.forEach((cat, idx) => {
+            const color = PIE_COLORS[idx % PIE_COLORS.length];
+            const pct = total > 0 ? ((cat.amount / total) * 100).toFixed(1) : 0;
+            legendHtml += `<div class="legend-item"><span class="legend-dot" style="background:${color};"></span><span class="legend-name">${cat.emoji} ${escapeHtml(cat.name)}</span><span class="legend-value">${pct}%</span></div>`;
+        });
+        if (cats.length > 8) {
+            const otherTotal = cats.slice(8).reduce((sum, c) => sum + c.amount, 0);
+            const otherPct = total > 0 ? ((otherTotal / total) * 100).toFixed(1) : 0;
+            legendHtml += `<div class="legend-item"><span class="legend-dot" style="background:#b0b8c4;"></span><span class="legend-name">📦 其他</span><span class="legend-value">${otherPct}%</span></div>`;
+        }
+        legendGrid.innerHTML = legendHtml;
+    }
+    function renderPieChart(categories, total) {
+        const canvas = document.getElementById('pieCanvas');
+        if (!canvas) return;
+        if (!categories || categories.length === 0 || total === 0) {
+            const ctx = canvas.getContext('2d');
+            const size = 100;
+            canvas.width = size; canvas.height = size;
+            ctx.clearRect(0, 0, size, size);
+            ctx.font = '12px sans-serif'; ctx.fillStyle = '#b0b8c4'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('无数据', size/2, size/2);
+            document.getElementById('legendGrid').innerHTML = '';
+            return;
+        }
+        drawPieWithLabels(canvas, categories, total);
+    }
+    function renderCategoryList(containerId, cats, total, type) {
+        const container = document.getElementById(containerId);
+        const displayType = type === 'income' ? '收入' : '支出';
+        if (!cats || cats.length === 0) {
+            container.innerHTML = `<div class="empty-state"><span class="emoji">📭</span>暂无${displayType}数据</div>`;
+            return;
+        }
+        let html = '';
+        cats.forEach(c => {
+            const cls = type === 'expense' ? 'expense' : 'income';
+            html += `<div class="category-stat-item"><span class="emoji">${c.emoji}</span><div class="info"><span class="name">${escapeHtml(c.name)}</span><span class="amount ${cls}">¥${c.amount.toFixed(2)}</span></div></div>`;
+        });
+        container.innerHTML = html;
+    }
+    function renderStats() {
+        const data = getStatsData();
+        document.getElementById('bookName').textContent = data.bookName;
+        document.getElementById('recordCount').textContent = '共 ' + data.totalCount + ' 笔';
+        document.getElementById('timeDisplay').textContent = data.timeLabel;
+        document.getElementById('totalIncome').textContent = '¥'+data.totalIncome.toFixed(2);
+        document.getElementById('totalExpense').textContent = '¥'+data.totalExpense.toFixed(2);
+        document.getElementById('totalBalance').textContent = '¥'+data.totalBalance.toFixed(2);
+        const isIncome = currentView === 'income';
+        const categories = isIncome ? data.incomeCategories : data.expenseCategories;
+        const total = isIncome ? data.totalIncome : data.totalExpense;
+        const type = isIncome ? 'income' : 'expense';
+        document.getElementById('chartTitle').textContent = isIncome ? '📈 收入分类' : '📉 支出分类';
+        document.getElementById('detailTitle').textContent = isIncome ? '📈 收入明细' : '📉 支出明细';
+        renderPieChart(categories, total);
+        renderCategoryList('categoryList', categories, total, type);
+    }
+    function changeTime(delta) { if (currentMode==='month') currentDate.setMonth(currentDate.getMonth()+delta); else currentDate.setFullYear(currentDate.getFullYear()+delta); renderStats(); }
+    function vibrate() { if (navigator.vibrate) navigator.vibrate(6); }
+    let toastTimer; function showToast(msg) { const el = document.getElementById('toast'); el.textContent = msg; el.classList.add('show'); clearTimeout(toastTimer); toastTimer = setTimeout(() => el.classList.remove('show'), 1800); }
+    window.addEventListener('bill-summary-updated', renderStats);
+    document.addEventListener('DOMContentLoaded', function() {
+        document.getElementById('viewExpense').className = 'active-expense';
+        document.getElementById('viewIncome').className = '';
+        renderStats();
+        document.getElementById('backBtn').addEventListener('click', function() { vibrate(); window.location.href='index.html'; });
+        document.getElementById('viewExpense').addEventListener('click', function() {
+            vibrate(); currentView = 'expense';
+            this.className = 'active-expense';
+            document.getElementById('viewIncome').className = '';
+            renderStats();
+        });
+        document.getElementById('viewIncome').addEventListener('click', function() {
+            vibrate(); currentView = 'income';
+            this.className = 'active-income';
+            document.getElementById('viewExpense').className = '';
+            renderStats();
+        });
+        document.getElementById('monthTab').addEventListener('click', function() {
+            vibrate(); currentMode='month'; this.className='time-tab active'; document.getElementById('yearTab').className='time-tab'; currentDate=new Date(); renderStats();
+        });
+        document.getElementById('yearTab').addEventListener('click', function() {
+            vibrate(); currentMode='year'; this.className='time-tab active'; document.getElementById('monthTab').className='time-tab'; currentDate=new Date(); renderStats();
+        });
+        document.getElementById('prevTime').addEventListener('click', function() { vibrate(); changeTime(-1); });
+        document.getElementById('nextTime').addEventListener('click', function() { vibrate(); changeTime(1); });
+    });
+</script>
+</body>
+</html>
